@@ -8,6 +8,7 @@
         input { padding: 10px; width: 300px; margin: 5px; }
         button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
         img { margin-top: 20px; max-width: 100%; border: 1px solid #ccc; }
+        a.download-link { text-decoration: none; }
     </style>
 </head>
 <body>
@@ -23,8 +24,11 @@
         <button type="submit">Gerar Imagem</button>
     </form>
     {% if image_url %}
-        <h2>Prévia:</h2>
-        <img src="{{ image_url }}">
+        <h2>Imagem Gerada:</h2>
+        <img src="{{ image_url }}" alt="Imagem gerada"><br>
+        <a class="download-link" href="{{ image_url }}" download="basso-frete.jpg">
+            <button>Baixar Imagem</button>
+        </a>
     {% endif %}
 </body>
 </html>
