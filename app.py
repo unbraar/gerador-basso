@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, url_for
+from flask import Flask, render_template, request, url_for
 from PIL import Image, ImageDraw, ImageFont
 import io
 import os
@@ -24,48 +24,56 @@ def index():
     return render_template("index.html", image_url=image_url)
 
 def generate_image(origem, coleta, destino, entrega, preco, produto, restricao):
-    img = Image.new("RGB", (800, 1100), "white")
+    img = Image.open("static/base.jpg").convert("RGB")
     draw = ImageDraw.Draw(img)
 
     try:
-        logo = Image.open("static/logo.jpg").convert("RGBA")
-        logo = logo.resize((250, 250))
-        img.paste(logo, (int((800 - logo.width) / 2), 20))
+        font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        font_regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     except:
-        pass
+        font_bold = font_regular = None
 
-    font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    font_regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-
-    def draw_centered(text, y, size=40, color="black", bold=False):
+    def draw_centered(text, y, size=26, color="black", bold=False, shadow=True):
         try:
             font = ImageFont.truetype(font_bold if bold else font_regular, size)
-        except IOError:
+        except:
             font = ImageFont.load_default()
         bbox = draw.textbbox((0, 0), text, font=font)
         text_width = bbox[2] - bbox[0]
-        x = (800 - text_width) / 2
+        x = (img.width - text_width) / 2
+        if shadow:
+            draw.text((x+1, y+1), text, font=font, fill="gray")
         draw.text((x, y), text, font=font, fill=color)
 
-    offset = 290
-    draw.rectangle([(0, offset), (800, offset + 60)], fill="black")
-    draw_centered(origem.upper(), offset + 10, 45, "white", True)
+    y_offset = 320
+    draw_centered(origem.upper(), y_offset, 30, "#1b5e20", True)
     if coleta:
-        draw_centered(f"({coleta})", offset + 70, 30)
+        draw_centered(f"({coleta})", y_offset + 32, 22, "#444")
 
-    draw_centered("X", offset + 130, 60, "red", True)
+    draw_centered("⇅", y_offset + 70, 34, "#2e7d32", True)
 
-    draw.rectangle([(0, offset + 200), (800, offset + 260)], fill="black")
-    draw_centered(destino.upper(), offset + 210, 45, "white", True)
+    draw_centered(destino.upper(), y_offset + 115, 30, "#1b5e20", True)
     if entrega:
-        draw_centered(f"({entrega})", offset + 270, 30)
+        draw_centered(f"({entrega})", y_offset + 147, 22, "#444")
 
-    draw.rectangle([(275, offset + 330), (525, offset + 390)], fill="#00c853")
-    draw_centered(preco, offset + 340, 40, "black", True)
+    draw_centered(produto.upper(), y_offset + 190, 26, "black", True)
 
-    draw_centered(produto.upper(), offset + 420, 30, "red", True)
+    draw.rectangle([(140, y_offset + 230), (img.width - 140, y_offset + 270)], fill="#a5d6a7")
+    draw_centered(preco, y_offset + 235, 26, "#1b5e20", True, shadow=False)
+
     if restricao:
-        draw_centered(restricao.upper(), offset + 500, 35, "#00c853", True)
+        draw_centered(restricao.upper(), y_offset + 290, 20, "#00c853", False)
+
+    # Rodapé institucional
+    draw.rectangle([(0, img.height - 40), (img.width, img.height)], fill="#1b5e20")
+    try:
+        font_footer = ImageFont.truetype(font_regular, 16)
+    except:
+        font_footer = ImageFont.load_default()
+    text = "Basso Logística e Transportes • www.logbasso.com.br • (55) 99999-9999"
+    bbox = draw.textbbox((0, 0), text, font=font_footer)
+    text_width = bbox[2] - bbox[0]
+    draw.text(((img.width - text_width) / 2, img.height - 30), text, font=font_footer, fill="white")
 
     output = io.BytesIO()
     img.save(output, format="JPEG")
