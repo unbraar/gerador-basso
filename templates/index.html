@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerador Basso</title>
+    <style>
+        body { font-family: Arial; padding: 20px; text-align: center; }
+        input { padding: 10px; width: 300px; margin: 5px; }
+        button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
+        img { margin-top: 20px; max-width: 100%; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Gerador de Imagens - Basso</h1>
+    <form method="POST">
+        <input name="origem" placeholder="Origem" required><br>
+        <input name="local_coleta" placeholder="Local de Coleta"><br>
+        <input name="destino" placeholder="Destino" required><br>
+        <input name="local_entrega" placeholder="Local de Entrega"><br>
+        <input name="preco" placeholder="Preço (ex: R$ 175,00)" required><br>
+        <input name="produto" placeholder="Produto" required><br>
+        <input name="restricao" placeholder="Restrição"><br>
+        <button type="submit">Gerar Imagem</button>
+    </form>
+    {% if image_url %}
+        <h2>Prévia:</h2>
+        <img src="{{ image_url }}">
+    {% endif %}
+</body>
+</html>
