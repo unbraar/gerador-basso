@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: gerador-basso
+    env: python
+    buildCommand: ""
+    startCommand: gunicorn app:app
