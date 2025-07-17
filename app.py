@@ -14,6 +14,7 @@ def index():
             data['origem'], data.get('local_coleta'), data['destino'],
             data.get('local_entrega'), data['preco'], data['produto'], data.get('restricao')
         )
+        os.makedirs("static", exist_ok=True)
         with open("static/output.jpg", "wb") as f:
             f.write(image_bytes.getbuffer())
         image_url = "/static/output.jpg"
