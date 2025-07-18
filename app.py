@@ -49,7 +49,7 @@ def generate_image(data, filename):
         if value:
             draw.rectangle([box_x0 + 20, y - 10, box_x1 - 20, y + 60], fill=(255,255,255), outline="white", width=3)
             txt = f"{icon} {label.upper()}: {value}"
-            font = ImageFont.truetype(FONT_BOLD if label in ["Origem", "Destino", "Preço"] else FONT_REG,  thirty=40)
+            font = ImageFont.truetype(FONT_BOLD if label in ["Origem", "Destino", "Preço"] else FONT_REG,  size=40)
             draw.text((box_x0 + 40, y), txt, font=font, fill="black")
             y += 80
 
