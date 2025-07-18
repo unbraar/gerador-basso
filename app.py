@@ -1,85 +1,78 @@
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request, send_file, url_for
 from PIL import Image, ImageDraw, ImageFont
-import io
-import os
+import io, os, pandas as pd, zipfile
+from datetime import datetime
 
 app = Flask(__name__)
+UPLOAD_FOLDER = 'uploads'
+STATIC_FOLDER = 'static'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    image_url = None
-    if request.method == "POST":
-        try:
-            data = request.form
-            image_bytes = generate_image(
-                data['origem'], data.get('local_coleta'), data['destino'],
-                data.get('local_entrega'), data['preco'], data['produto'], data.get('restricao')
-            )
-            os.makedirs("static", exist_ok=True)
-            with open("static/output.jpg", "wb") as f:
-                f.write(image_bytes.getbuffer())
-            image_url = url_for('static', filename='output.jpg')
-        except Exception as e:
-            return f"Erro ao gerar imagem: {e}", 500
-    return render_template("index.html", image_url=image_url)
-
-def generate_image(origem, coleta, destino, entrega, preco, produto, restricao):
-    img = Image.open("static/base.jpg").convert("RGB")
+def generate_image(origem, coleta, destino, entrega, preco, produto, restricao, index=None):
+    img = Image.open(f"{STATIC_FOLDER}/base.jpg").convert("RGB")
     draw = ImageDraw.Draw(img)
+    font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    font_regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
-    try:
-        font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-        font_regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    except:
-        font_bold = font_regular = None
+    def font(size=24, bold=False):
+        try: return ImageFont.truetype(font_bold if bold else font_regular, size)
+        except: return ImageFont.load_default()
 
-    def draw_centered(text, y, size=26, color="black", bold=False, shadow=True):
-        try:
-            font = ImageFont.truetype(font_bold if bold else font_regular, size)
-        except:
-            font = ImageFont.load_default()
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = bbox[2] - bbox[0]
-        x = (img.width - text_width) / 2
-        if shadow:
-            draw.text((x+1, y+1), text, font=font, fill="gray")
-        draw.text((x, y), text, font=font, fill=color)
+    def draw_centered_boxed(text, y, width=img.width-100, height=40, bg="#dcedc8", color="black", fsize=24, bold=True):
+        box_x = (img.width - width) // 2
+        draw.rectangle([box_x, y, box_x+width, y+height], fill=bg, outline="#a5d6a7")
+        f = font(fsize, bold)
+        bbox = draw.textbbox((0, 0), text, font=f)
+        tx = (img.width - (bbox[2] - bbox[0])) // 2
+        draw.text((tx, y + (height - (bbox[3] - bbox[1])) // 2), text, font=f, fill=color)
 
-    y_offset = 320
-    draw_centered(origem.upper(), y_offset, 30, "#1b5e20", True)
-    if coleta:
-        draw_centered(f"({coleta})", y_offset + 32, 22, "#444")
-
-    draw_centered("⇅", y_offset + 70, 34, "#2e7d32", True)
-
-    draw_centered(destino.upper(), y_offset + 115, 30, "#1b5e20", True)
-    if entrega:
-        draw_centered(f"({entrega})", y_offset + 147, 22, "#444")
-
-    draw_centered(produto.upper(), y_offset + 190, 26, "black", True)
-
-    draw.rectangle([(140, y_offset + 230), (img.width - 140, y_offset + 270)], fill="#a5d6a7")
-    draw_centered(preco, y_offset + 235, 26, "#1b5e20", True, shadow=False)
-
-    if restricao:
-        draw_centered(restricao.upper(), y_offset + 290, 20, "#00c853", False)
-
-    # Rodapé institucional
-    draw.rectangle([(0, img.height - 40), (img.width, img.height)], fill="#1b5e20")
-    try:
-        font_footer = ImageFont.truetype(font_regular, 16)
-    except:
-        font_footer = ImageFont.load_default()
-    text = "Basso Logística e Transportes • www.logbasso.com.br • (55) 99999-9999"
-    bbox = draw.textbbox((0, 0), text, font=font_footer)
-    text_width = bbox[2] - bbox[0]
-    draw.text(((img.width - text_width) / 2, img.height - 30), text, font=font_footer, fill="white")
+    y = 310
+    draw_centered_boxed(origem.upper(), y, bg="#c8e6c9", fsize=26)
+    if coleta: draw_centered_boxed(f"COLETA: {coleta}", y+50, bg="#e0f2f1", fsize=20, bold=True)
+    draw_centered_boxed(destino.upper(), y+110, bg="#c8e6c9", fsize=26)
+    if entrega: draw_centered_boxed(f"ENTREGA: {entrega}", y+160, bg="#e0f2f1", fsize=20, bold=True)
+    draw_centered_boxed(f"PRODUTO: {produto}", y+220, bg="#fffde7", fsize=22, bold=False)
+    draw_centered_boxed(f"VALOR: {preco}", y+275, bg="#a5d6a7", fsize=26, bold=True)
+    if restricao: draw_centered_boxed(restricao.upper(), y+330, bg="#f1f8e9", fsize=18, bold=False)
 
     output = io.BytesIO()
     img.save(output, format="JPEG")
     output.seek(0)
     return output
 
+@app.route("/", methods=["GET", "POST"])
+def index():
+    image_url = None
+    if request.method == "POST" and 'origem' in request.form:
+        data = request.form
+        image_bytes = generate_image(
+            data['origem'], data.get('local_coleta'), data['destino'],
+            data.get('local_entrega'), data['preco'], data['produto'], data.get('restricao')
+        )
+        with open(f"static/output.jpg", "wb") as f:
+            f.write(image_bytes.getbuffer())
+        image_url = url_for('static', filename='output.jpg')
+    return render_template("index.html", image_url=image_url)
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    if 'planilha' not in request.files: return "Nenhum arquivo enviado.", 400
+    file = request.files['planilha']
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    filepath = os.path.join(UPLOAD_FOLDER, f"lote_{timestamp}.xlsx")
+    file.save(filepath)
+    df = pd.read_excel(filepath)
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as zf:
+        for i, row in df.iterrows():
+            img_bytes = generate_image(
+                str(row.get("origem", "")), str(row.get("local_coleta", "")),
+                str(row.get("destino", "")), str(row.get("local_entrega", "")),
+                str(row.get("preco", "")), str(row.get("produto", "")), str(row.get("restricao", "")), i
+            )
+            zf.writestr(f"imagem_{i+1}.jpg", img_bytes.getvalue())
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, download_name="imagens_basso.zip")
+
 if __name__ == "__main__":
-    os.makedirs("static", exist_ok=True)
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
