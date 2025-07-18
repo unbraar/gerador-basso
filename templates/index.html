@@ -1,45 +1,27 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerador Basso</title>
+    <title>Gerador Basso - Lote</title>
     <style>
-        body { font-family: Arial; padding: 20px; background-color: #f1f8f5; text-align: center; }
-        input, button { padding: 10px; margin: 5px; width: 300px; border-radius: 4px; border: 1px solid #ccc; }
-        button { background-color: #2e7d32; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #1b5e20; }
-        .preview img { margin-top: 20px; max-width: 100%; border: 1px solid #ccc; border-radius: 6px; }
+        body { font-family: Arial; padding: 20px; text-align: center; background: #f2f2f2; }
+        input, button { padding: 10px; margin: 10px; width: 300px; }
+        .form-box { background: white; padding: 30px; border-radius: 10px; display: inline-block; }
     </style>
 </head>
 <body>
-    <h1 style="color:#1b5e20;">Gerador de Imagens - Basso</h1>
-    <form method="POST">
-        <input name="origem" placeholder="Origem" required><br>
-        <input name="local_coleta" placeholder="Local de Coleta"><br>
-        <input name="destino" placeholder="Destino" required><br>
-        <input name="local_entrega" placeholder="Local de Entrega"><br>
-        <input name="preco" placeholder="Preço" required><br>
-        <input name="produto" placeholder="Produto" required><br>
-        <input name="restricao" placeholder="Restrição"><br>
-        <button type="submit">Gerar Imagem</button>
-    </form>
-
-    {% if image_url %}
-    <div class="preview">
-        <h2>Imagem Gerada:</h2>
-        <img src="{{ image_url }}"><br>
-        <a href="{{ image_url }}" download="basso-frete.jpg">
-            <button>Baixar Imagem</button>
-        </a>
+    <h1>Gerador de Imagens Basso - Lote</h1>
+    <div class="form-box">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <p>Envie uma planilha .xlsx com os dados:</p>
+            <input type="file" name="planilha" accept=".xlsx" required><br>
+            <button type="submit">Gerar imagens</button>
+        </form>
     </div>
+    {% if zip_url %}
+        <h2>Imagens geradas com sucesso!</h2>
+        <a href="{{ zip_url }}"><button>Baixar ZIP</button></a>
     {% endif %}
-
-    <hr style="margin: 40px 0;">
-    <h2 style="color:#1b5e20;">Gerar Várias Imagens via Planilha</h2>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <input type="file" name="planilha" accept=".xlsx" required><br>
-        <button type="submit">Gerar Lote de Imagens</button>
-    </form>
-    <p>Baixe o <a href="https://docs.google.com/spreadsheets/d/1aJMHZykSlqFb6AxKq6mh_iSh-3KD1a2mhLzMnHK4Z6Y/edit?usp=sharing" target="_blank">modelo de planilha</a>.</p>
 </body>
 </html>
