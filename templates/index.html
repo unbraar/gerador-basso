@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <title>Gerador Basso</title>
     <style>
-        body { font-family: Arial; padding: 20px; text-align: center; background-color: #e8f5e9; }
-        input { padding: 10px; width: 300px; margin: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 20px; font-size: 16px; margin-top: 10px; background-color: #2e7d32; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        body { font-family: Arial; padding: 20px; background-color: #f1f8f5; text-align: center; }
+        input, button { padding: 10px; margin: 5px; width: 300px; border-radius: 4px; border: 1px solid #ccc; }
+        button { background-color: #2e7d32; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #1b5e20; }
-        img { margin-top: 20px; max-width: 100%; border: 1px solid #ccc; border-radius: 6px; }
-        a.download-link { text-decoration: none; }
+        .preview img { margin-top: 20px; max-width: 100%; border: 1px solid #ccc; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -19,17 +18,28 @@
         <input name="local_coleta" placeholder="Local de Coleta"><br>
         <input name="destino" placeholder="Destino" required><br>
         <input name="local_entrega" placeholder="Local de Entrega"><br>
-        <input name="preco" placeholder="Preço (ex: R$ 175,00)" required><br>
+        <input name="preco" placeholder="Preço" required><br>
         <input name="produto" placeholder="Produto" required><br>
         <input name="restricao" placeholder="Restrição"><br>
         <button type="submit">Gerar Imagem</button>
     </form>
+
     {% if image_url %}
-        <h2 style="color:#2e7d32;">Imagem Gerada:</h2>
-        <img src="{{ image_url }}" alt="Imagem gerada"><br>
-        <a class="download-link" href="{{ image_url }}" download="basso-frete.jpg">
+    <div class="preview">
+        <h2>Imagem Gerada:</h2>
+        <img src="{{ image_url }}"><br>
+        <a href="{{ image_url }}" download="basso-frete.jpg">
             <button>Baixar Imagem</button>
         </a>
+    </div>
     {% endif %}
+
+    <hr style="margin: 40px 0;">
+    <h2 style="color:#1b5e20;">Gerar Várias Imagens via Planilha</h2>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="planilha" accept=".xlsx" required><br>
+        <button type="submit">Gerar Lote de Imagens</button>
+    </form>
+    <p>Baixe o <a href="https://docs.google.com/spreadsheets/d/1aJMHZykSlqFb6AxKq6mh_iSh-3KD1a2mhLzMnHK4Z6Y/edit?usp=sharing" target="_blank">modelo de planilha</a>.</p>
 </body>
 </html>
