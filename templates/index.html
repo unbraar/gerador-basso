@@ -3,25 +3,47 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerador Basso - Lote</title>
+    <title>Gerador Basso</title>
     <style>
-        body { font-family: Arial; padding: 20px; text-align: center; background: #f2f2f2; }
-        input, button { padding: 10px; margin: 10px; width: 300px; }
-        .form-box { background: white; padding: 30px; border-radius: 10px; display: inline-block; }
+        body { font-family: Arial; padding: 20px; text-align: center; background: #f7f7f7; }
+        input, button { padding: 10px; margin: 5px; width: 300px; }
+        .form-container { background: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; display: inline-block; }
     </style>
 </head>
 <body>
-    <h1>Gerador de Imagens Basso - Lote</h1>
-    <div class="form-box">
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <p>Envie uma planilha .xlsx com os dados:</p>
-            <input type="file" name="planilha" accept=".xlsx" required><br>
-            <button type="submit">Gerar imagens</button>
+    <h1>Gerador de Imagens - Basso</h1>
+
+    <!-- Formulário Individual -->
+    <div class="form-container">
+        <h2>Gerar Imagem Individual</h2>
+        <form method="POST" action="/" enctype="multipart/form-data">
+            <input name="origem" placeholder="Origem" required><br>
+            <input name="local_coleta" placeholder="Local de Coleta"><br>
+            <input name="destino" placeholder="Destino" required><br>
+            <input name="local_entrega" placeholder="Local de Entrega"><br>
+            <input name="preco" placeholder="Preço (ex: R$ 175,00)" required><br>
+            <input name="produto" placeholder="Produto" required><br>
+            <input name="restricao" placeholder="Restrição"><br>
+            <button type="submit">Gerar Imagem</button>
         </form>
+        {% if image_url %}
+            <h3>Prévia:</h3>
+            <img src="{{ image_url }}" style="max-width: 100%; margin-top: 10px;">
+        {% endif %}
     </div>
-    {% if zip_url %}
-        <h2>Imagens geradas com sucesso!</h2>
-        <a href="{{ zip_url }}"><button>Baixar ZIP</button></a>
-    {% endif %}
+
+    <!-- Upload de Planilha -->
+    <div class="form-container">
+        <h2>Gerar Imagens em Lote</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <p>Envie uma planilha (.xlsx) com os dados:</p>
+            <input type="file" name="planilha" accept=".xlsx" required><br>
+            <button type="submit">Gerar imagens em lote</button>
+        </form>
+        {% if zip_url %}
+            <h3>Download:</h3>
+            <a href="{{ zip_url }}"><button>Baixar ZIP</button></a>
+        {% endif %}
+    </div>
 </body>
 </html>
