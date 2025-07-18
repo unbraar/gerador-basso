@@ -1,25 +1,81 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerador de Imagem Basso</title>
+    <title>Gerador Basso</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2fef5;
+            text-align: center;
+            padding: 30px;
+        }
+        .form-box {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 40px;
+            display: inline-block;
+        }
+        input, button {
+            padding: 10px;
+            margin: 8px;
+            width: 300px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .image-preview {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Formulário de Geração</h2>
-    <form method="POST" enctype="multipart/form-data">
-        Origem: <input type="text" name="origem"><br>
-        Local de Coleta: <input type="text" name="coleta"><br>
-        Destino: <input type="text" name="destino"><br>
-        Local de Entrega: <input type="text" name="entrega"><br>
-        Produto: <input type="text" name="produto"><br>
-        Preço: <input type="text" name="preco"><br>
-        Restrição: <input type="text" name="restricao"><br><br>
-        <button type="submit">Gerar Imagem</button>
-    </form>
-    <h3>Ou envie uma planilha:</h3>
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="spreadsheet">
-        <button type="submit">Enviar Planilha</button>
-    </form>
+    <h1>Gerador de Imagens Basso</h1>
+
+    <div class="form-box">
+        <h2>Gerar Imagem Individual</h2>
+        <form method="POST" action="/" enctype="multipart/form-data">
+            <input name="origem" placeholder="Origem" required><br>
+            <input name="local_coleta" placeholder="Local de Coleta"><br>
+            <input name="destino" placeholder="Destino" required><br>
+            <input name="local_entrega" placeholder="Local de Entrega"><br>
+            <input name="preco" placeholder="Preço (ex: R$ 175,00)" required><br>
+            <input name="produto" placeholder="Produto" required><br>
+            <input name="restricao" placeholder="Restrição"><br>
+            <button type="submit">Gerar Imagem</button>
+        </form>
+        {% if image_url %}
+            <div class="image-preview">
+                <h3>Prévia:</h3>
+                <img src="{{ image_url }}" style="max-width: 100%;">
+                <p><a href="{{ image_url }}" download><button>Baixar Imagem</button></a></p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-box">
+        <h2>Gerar Imagens em Lote</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="planilha" accept=".xlsx" required><br>
+            <button type="submit">Gerar Lote ZIP</button>
+        </form>
+        {% if zip_url %}
+            <div class="image-preview">
+                <h3>Download do Lote:</h3>
+                <a href="{{ zip_url }}"><button>Baixar ZIP</button></a>
+            </div>
+        {% endif %}
+    </div>
 </body>
 </html>
