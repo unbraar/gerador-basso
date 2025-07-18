@@ -1,4 +1,4 @@
-gunicorn app:app
+gunicorn
 Flask
 pandas
 openpyxl
