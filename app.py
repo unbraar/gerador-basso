@@ -4,14 +4,37 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 import pandas as pd
 import zipfile
+import io
 from datetime import datetime
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "static"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route("/", methods=["GET"])
+def desenhar_imagem(origem, coleta, destino, entrega, preco, produto, restricao):
+    img = Image.new("RGB", (1080, 1350), "white")
+    draw = ImageDraw.Draw(img)
+    font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    font = ImageFont.truetype(font_bold, 40)
+    y = 150
+    for label, value in [("ORIGEM", origem), ("COLETA", coleta), ("DESTINO", destino),
+                         ("ENTREGA", entrega), ("PRODUTO", produto), ("PREÇO", preco), ("RESTRIÇÃO", restricao)]:
+        if value:
+            draw.text((80, y), f"{label}: {value}", font=font, fill="black")
+            y += 100
+    return img
+
+@app.route("/", methods=["GET", "POST"])
 def index():
+    if request.method == "POST":
+        data = request.form
+        imagem = desenhar_imagem(
+            data['origem'], data.get('local_coleta'), data['destino'],
+            data.get('local_entrega'), data['preco'], data['produto'], data.get('restricao')
+        )
+        img_path = os.path.join(UPLOAD_FOLDER, "output.jpg")
+        imagem.save(img_path)
+        return render_template("index.html", image_url=f"/{img_path}")
     return render_template("index.html")
 
 @app.route("/upload", methods=["POST"])
@@ -24,18 +47,12 @@ def upload():
     df = pd.read_excel(arquivo)
 
     for idx, row in df.iterrows():
-        img = Image.new("RGB", (1080, 1350), "white")
-        draw = ImageDraw.Draw(img)
-        font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-        font = ImageFont.truetype(font_bold, 40)
-        y = 150
-        for campo in ["origem", "coleta", "destino", "entrega", "produto", "preco", "restricao"]:
-            texto = f"{campo.upper()}: {str(row.get(campo, '')).strip()}"
-            draw.text((80, y), texto, font=font, fill="black")
-            y += 100
-
+        imagem = desenhar_imagem(
+            row.get("origem", ""), row.get("coleta", ""), row.get("destino", ""),
+            row.get("entrega", ""), row.get("preco", ""), row.get("produto", ""), row.get("restricao", "")
+        )
         img_path = os.path.join(pasta_saida, f"imagem_{idx+1}.png")
-        img.save(img_path)
+        imagem.save(img_path)
 
     zip_path = os.path.join(UPLOAD_FOLDER, f"imagens_{timestamp}.zip")
     with zipfile.ZipFile(zip_path, "w") as zipf:

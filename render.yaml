@@ -1,6 +1,6 @@
 services:
 - type: web
-  name: gerador-basso-lote
+  name: gerador-basso-completo
   env: python
   buildCommand: ""
   startCommand: "gunicorn app:app"
