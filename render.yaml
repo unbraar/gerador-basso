@@ -1,6 +1,6 @@
 services:
 - type: web
-  name: gerador-basso-completo
+  name: gerador-basso-visual
   env: python
   buildCommand: ""
   startCommand: "gunicorn app:app"

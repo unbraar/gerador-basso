@@ -1,66 +1,101 @@
 
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for
 from PIL import Image, ImageDraw, ImageFont
-import os
 import pandas as pd
-import zipfile
+import os
 import io
 from datetime import datetime
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "static"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+OUTPUT_FOLDER = os.path.join(UPLOAD_FOLDER, "output")
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-def desenhar_imagem(origem, coleta, destino, entrega, preco, produto, restricao):
-    img = Image.new("RGB", (1080, 1350), "white")
+def generate_image(data, filename):
+    # Criação da imagem base
+    img = Image.new("RGB", (1080, 1080), "white")
     draw = ImageDraw.Draw(img)
-    font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    font = ImageFont.truetype(font_bold, 40)
-    y = 150
-    for label, value in [("ORIGEM", origem), ("COLETA", coleta), ("DESTINO", destino),
-                         ("ENTREGA", entrega), ("PRODUTO", produto), ("PREÇO", preco), ("RESTRIÇÃO", restricao)]:
+
+    # Fontes
+    FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    FONT_REG = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+
+    # Logo
+    logo_path = "static/logo_basso.png"
+    if os.path.exists(logo_path):
+        logo = Image.open(logo_path).convert("RGBA")
+        logo = logo.resize((280, 90))
+        img.paste(logo, (int((1080 - 280) / 2), 30), logo)
+
+    # Caixa central com sombra
+    box_x0, box_y0, box_x1, box_y1 = 80, 150, 1000, 930
+    shadow_color = (0, 100, 0, 100)
+    draw.rectangle([box_x0+4, box_y0+4, box_x1+4, box_y1+4], fill=(0, 100, 0, 40))
+    draw.rectangle([box_x0, box_y0, box_x1, box_y1], fill=(200, 255, 200, 240))
+
+    # Campos com ícones simulados
+    campos = [
+        ("Origem", data.get("origem", ""), "🛫"),
+        ("Local de Coleta", data.get("local_coleta", ""), "📍"),
+        ("Destino", data.get("destino", ""), "🛬"),
+        ("Local de Entrega", data.get("local_entrega", ""), "🏁"),
+        ("Produto", data.get("produto", ""), "📦"),
+        ("Preço", data.get("preco", ""), "💰"),
+        ("Restrição", data.get("restricao", ""), "⚠️"),
+    ]
+
+    y = box_y0 + 40
+    for label, value, icon in campos:
         if value:
-            draw.text((80, y), f"{label}: {value}", font=font, fill="black")
-            y += 100
-    return img
+            draw.rectangle([box_x0 + 20, y - 10, box_x1 - 20, y + 60], fill=(255,255,255), outline="white", width=3)
+            txt = f"{icon} {label.upper()}: {value}"
+            font = ImageFont.truetype(FONT_BOLD if label in ["Origem", "Destino", "Preço"] else FONT_REG,  thirty=40)
+            draw.text((box_x0 + 40, y), txt, font=font, fill="black")
+            y += 80
+
+    output_path = os.path.join(OUTPUT_FOLDER, filename)
+    img.save(output_path, "JPEG")
+    return output_path
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        data = request.form
-        imagem = desenhar_imagem(
-            data['origem'], data.get('local_coleta'), data['destino'],
-            data.get('local_entrega'), data['preco'], data['produto'], data.get('restricao')
-        )
-        img_path = os.path.join(UPLOAD_FOLDER, "output.jpg")
-        imagem.save(img_path)
-        return render_template("index.html", image_url=f"/{img_path}")
+        data = {
+            "origem": request.form.get("origem"),
+            "local_coleta": request.form.get("local_coleta"),
+            "destino": request.form.get("destino"),
+            "local_entrega": request.form.get("local_entrega"),
+            "preco": request.form.get("preco"),
+            "produto": request.form.get("produto"),
+            "restricao": request.form.get("restricao"),
+        }
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"output_{timestamp}.jpg"
+        generate_image(data, filename)
+        return render_template("index.html", image_url=f"/static/output/{filename}")
     return render_template("index.html")
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    arquivo = request.files["planilha"]
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    pasta_saida = os.path.join(UPLOAD_FOLDER, f"lote_{timestamp}")
-    os.makedirs(pasta_saida, exist_ok=True)
+    file = request.files["planilha"]
+    if file.filename.endswith(".xlsx"):
+        df = pd.read_excel(file)
+        zip_name = f"lote_{datetime.now().strftime('%Y%m%d%H%M%S')}.zip"
+        temp_img_paths = []
 
-    df = pd.read_excel(arquivo)
+        for i, row in df.iterrows():
+            data = row.to_dict()
+            filename = f"img_{i+1}.jpg"
+            path = generate_image(data, filename)
+            temp_img_paths.append(path)
 
-    for idx, row in df.iterrows():
-        imagem = desenhar_imagem(
-            row.get("origem", ""), row.get("coleta", ""), row.get("destino", ""),
-            row.get("entrega", ""), row.get("preco", ""), row.get("produto", ""), row.get("restricao", "")
-        )
-        img_path = os.path.join(pasta_saida, f"imagem_{idx+1}.png")
-        imagem.save(img_path)
+        import zipfile
+        zip_path = os.path.join(OUTPUT_FOLDER, zip_name)
+        with zipfile.ZipFile(zip_path, "w") as zipf:
+            for file_path in temp_img_paths:
+                zipf.write(file_path, os.path.basename(file_path))
+        return render_template("index.html", zip_url=f"/static/output/{zip_name}")
+    return redirect(url_for("index"))
 
-    zip_path = os.path.join(UPLOAD_FOLDER, f"imagens_{timestamp}.zip")
-    with zipfile.ZipFile(zip_path, "w") as zipf:
-        for nome_img in os.listdir(pasta_saida):
-            zipf.write(os.path.join(pasta_saida, nome_img), arcname=nome_img)
-
-    return render_template("index.html", zip_url="/" + zip_path)
-
-@app.route("/static/<path:filename>")
-def static_files(filename):
-    return send_from_directory("static", filename)
+if __name__ == "__main__":
+    app.run(debug=True)
