@@ -5,16 +5,45 @@
     <meta charset="UTF-8">
     <title>Gerador Basso</title>
     <style>
-        body { font-family: Arial; padding: 20px; text-align: center; background: #f7f7f7; }
-        input, button { padding: 10px; margin: 5px; width: 300px; }
-        .form-container { background: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; display: inline-block; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2fef5;
+            text-align: center;
+            padding: 30px;
+        }
+        .form-box {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 40px;
+            display: inline-block;
+        }
+        input, button {
+            padding: 10px;
+            margin: 8px;
+            width: 300px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .image-preview {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Gerador de Imagens - Basso</h1>
+    <h1>Gerador de Imagens Basso</h1>
 
-    <!-- Formulário Individual -->
-    <div class="form-container">
+    <div class="form-box">
         <h2>Gerar Imagem Individual</h2>
         <form method="POST" action="/" enctype="multipart/form-data">
             <input name="origem" placeholder="Origem" required><br>
@@ -27,22 +56,25 @@
             <button type="submit">Gerar Imagem</button>
         </form>
         {% if image_url %}
-            <h3>Prévia:</h3>
-            <img src="{{ image_url }}" style="max-width: 100%; margin-top: 10px;">
+            <div class="image-preview">
+                <h3>Prévia:</h3>
+                <img src="{{ image_url }}" style="max-width: 100%;">
+                <p><a href="{{ image_url }}" download><button>Baixar Imagem</button></a></p>
+            </div>
         {% endif %}
     </div>
 
-    <!-- Upload de Planilha -->
-    <div class="form-container">
+    <div class="form-box">
         <h2>Gerar Imagens em Lote</h2>
         <form action="/upload" method="post" enctype="multipart/form-data">
-            <p>Envie uma planilha (.xlsx) com os dados:</p>
             <input type="file" name="planilha" accept=".xlsx" required><br>
-            <button type="submit">Gerar imagens em lote</button>
+            <button type="submit">Gerar Lote ZIP</button>
         </form>
         {% if zip_url %}
-            <h3>Download:</h3>
-            <a href="{{ zip_url }}"><button>Baixar ZIP</button></a>
+            <div class="image-preview">
+                <h3>Download do Lote:</h3>
+                <a href="{{ zip_url }}"><button>Baixar ZIP</button></a>
+            </div>
         {% endif %}
     </div>
 </body>
