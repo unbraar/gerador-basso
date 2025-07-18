@@ -1,8 +1,6 @@
 services:
-  - type: web
-    name: gerador-basso
-    env: python
-    buildCommand: ""
-    startCommand: gunicorn app:app
-    plan: free
-    region: oregon
+- type: web
+  name: gerador-basso-visual
+  env: python
+  buildCommand: ""
+  startCommand: "gunicorn app:app"
