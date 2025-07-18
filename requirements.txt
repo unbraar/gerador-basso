@@ -1,4 +1,4 @@
+gunicorn
 flask
 pillow
-gunicorn app:app
 openpyxl
